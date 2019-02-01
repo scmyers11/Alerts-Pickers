@@ -19,7 +19,7 @@ extension UIView {
     
     @IBInspectable
     /// Corner radius of view; also inspectable from Storyboard.
-    public var cornerRadius: CGFloat {
+    internal var cornerRadius: CGFloat {
         get {
             return layer.cornerRadius
         }
