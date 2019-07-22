@@ -1,9 +1,5 @@
 import UIKit
-import Foundation
 
-// MARK: - Designable Extension
-
-@IBDesignable
 extension UIView {
     
     @IBInspectable
@@ -31,7 +27,7 @@ extension UIView {
     
     @IBInspectable
     /// Border color of view; also inspectable from Storyboard.
-    public var borderColor: UIColor? {
+    internal var borderColor: UIColor? {
         get {
             guard let color = layer.borderColor else {
                 return nil
@@ -49,7 +45,7 @@ extension UIView {
     
     @IBInspectable
     /// Border width of view; also inspectable from Storyboard.
-    public var borderWidth: CGFloat {
+    internal var borderWidth: CGFloat {
         get {
             return layer.borderWidth
         }
@@ -60,7 +56,7 @@ extension UIView {
     
     @IBInspectable
     /// Shadow color of view; also inspectable from Storyboard.
-    public var shadowColor: UIColor? {
+    internal var shadowColor: UIColor? {
         get {
             guard let color = layer.shadowColor else {
                 return nil
@@ -74,7 +70,7 @@ extension UIView {
     
     @IBInspectable
     /// Shadow offset of view; also inspectable from Storyboard.
-    public var shadowOffset: CGSize {
+    internal var shadowOffset: CGSize {
         get {
             return layer.shadowOffset
         }
@@ -85,7 +81,7 @@ extension UIView {
     
     @IBInspectable
     /// Shadow opacity of view; also inspectable from Storyboard.
-    public var shadowOpacity: Double {
+    internal var shadowOpacity: Double {
         get {
             return Double(layer.shadowOpacity)
         }
@@ -96,7 +92,7 @@ extension UIView {
     
     @IBInspectable
     /// Shadow radius of view; also inspectable from Storyboard.
-    public var shadowRadius: CGFloat {
+    internal var shadowRadius: CGFloat {
         get {
             return layer.shadowRadius
         }
@@ -107,7 +103,7 @@ extension UIView {
     
     @IBInspectable
     /// Shadow path of view; also inspectable from Storyboard.
-    public var shadowPath: CGPath? {
+    internal var shadowPath: CGPath? {
         get {
             return layer.shadowPath
         }
@@ -119,7 +115,7 @@ extension UIView {
     @IBInspectable
     /// Should shadow rasterize of view; also inspectable from Storyboard.
     /// cache the rendered shadow so that it doesn't need to be redrawn
-    public var shadowShouldRasterize: Bool {
+    internal var shadowShouldRasterize: Bool {
         get {
             return layer.shouldRasterize
         }
@@ -131,7 +127,7 @@ extension UIView {
     @IBInspectable
     /// Should shadow rasterize of view; also inspectable from Storyboard.
     /// cache the rendered shadow so that it doesn't need to be redrawn
-    public var shadowRasterizationScale: CGFloat {
+    internal var shadowRasterizationScale: CGFloat {
         get {
             return layer.rasterizationScale
         }
@@ -142,7 +138,7 @@ extension UIView {
     
     @IBInspectable
     /// Corner radius of view; also inspectable from Storyboard.
-    public var maskToBounds: Bool {
+    internal var maskToBounds: Bool {
         get {
             return layer.masksToBounds
         }
@@ -262,5 +258,9 @@ extension UIView {
         }
         getSubview(view: self)
         return all
+    }
+    
+    func dlgpicker_setupRoundCorners() {
+        self.layer.cornerRadius = min(bounds.size.height, bounds.size.width) / 2
     }
 }

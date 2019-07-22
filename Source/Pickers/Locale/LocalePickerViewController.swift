@@ -84,7 +84,7 @@ final public class LocalePickerViewController: UIViewController {
     fileprivate lazy var indicatorView: UIActivityIndicatorView = {
         $0.color = .lightGray
         return $0
-    }(UIActivityIndicatorView(activityIndicatorStyle: .whiteLarge))
+    }(UIActivityIndicatorView(style: .whiteLarge))
     
     // MARK: Initialize
     
@@ -134,7 +134,7 @@ final public class LocalePickerViewController: UIViewController {
     
     override public func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
-        tableView.tableHeaderView?.height = 57
+        tableView.tableHeaderView?.frame.size.height = 57
         searchController.searchBar.sizeToFit()
         searchController.searchBar.frame.size.width = searchView.frame.size.width
         searchController.searchBar.frame.size.height = searchView.frame.size.height
@@ -176,7 +176,7 @@ final public class LocalePickerViewController: UIViewController {
                 
                 DispatchQueue.main.async {
                     
-                    let alert = UIAlertController(style: .alert, title: error.title, message: error.message)
+                    let alert = UIAlertController(title: error.title, message: error.message, preferredStyle: .alert)
                     alert.addAction(title: "OK", style: .cancel) { action in
                         self.indicatorView.stopAnimating()
                         self.alertController?.dismiss(animated: true)
@@ -240,8 +240,17 @@ extension LocalePickerViewController: UISearchResultsUpdating {
     public func updateSearchResults(for searchController: UISearchController) {
         if let searchText = searchController.searchBar.text, searchController.isActive {
             filteredInfo = []
-            if searchText.count > 0, let values = orderedInfo[String(searchText[searchText.startIndex])] {
-                filteredInfo.append(contentsOf: values.filter { $0.country.hasPrefix(searchText) })
+            if searchText.count > 0 {
+                filteredInfo = orderedInfo.values.reduce([], +).filter {
+                    var propertis: [String?] = [$0.country]
+                    if type == .phoneCode {
+                        propertis.append($0.phoneCode)
+                    } else if type == .currency {
+                        propertis.append(contentsOf: [$0.currencyName, $0.currencyCode, $0.currencySymbol])
+                    }
+                    return propertis.compactMap { $0?.lowercased().contains(searchText.lowercased()) }
+                        .reduce(false, { $0 || $1 })
+                }
             } else {
                 orderedInfo.forEach { key, value in
                     filteredInfo += value

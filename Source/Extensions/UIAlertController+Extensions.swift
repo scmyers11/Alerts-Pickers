@@ -12,7 +12,7 @@ extension UIAlertController {
     ///   - message: alert controller's message (default is nil).
     ///   - defaultActionButtonTitle: default action button title (default is "OK")
     ///   - tintColor: alert controller's tint color (default is nil)
-    convenience public init(style: UIAlertControllerStyle, source: UIView? = nil, title: String? = nil, message: String? = nil, tintColor: UIColor? = nil) {
+    convenience public init(style: UIAlertController.Style, source: UIView? = nil, title: String? = nil, message: String? = nil, tintColor: UIColor? = nil) {
         self.init(title: title, message: message, preferredStyle: style)
         
         // TODO: for iPad or other views
@@ -48,12 +48,12 @@ extension UIAlertController {
     ///   - animated: set true to animate presentation of alert controller (default is true).
     ///   - vibrate: set true to vibrate the device while presenting the alert (default is false).
     ///   - completion: an optional completion handler to be called after presenting alert controller (default is nil).
-    public func show(animated: Bool = true, vibrate: Bool = false, style: UIBlurEffectStyle? = nil, completion: (() -> Void)? = nil) {
+    public func show(animated: Bool = true, vibrate: Bool = false, style: UIBlurEffect.Style? = nil, completion: (() -> Void)? = nil) {
         
         /// TODO: change UIBlurEffectStyle
         if let style = style {
-            for subview in view.allSubViewsOf(type: UIVisualEffectView.self) {
-                subview.effect = UIBlurEffect(style: style)
+            for subview in view.subviews where subview is UIVisualEffectView {
+                (subview as? UIVisualEffectView)?.effect = UIBlurEffect(style: style)
             }
         }
         
@@ -72,7 +72,7 @@ extension UIAlertController {
     ///   - style: action style (default is UIAlertActionStyle.default)
     ///   - isEnabled: isEnabled status for action (default is true)
     ///   - handler: optional action handler to be called when button is tapped (default is nil)
-    public func addAction(image: UIImage? = nil, title: String, color: UIColor? = nil, style: UIAlertActionStyle = .default, isEnabled: Bool = true, handler: ((UIAlertAction) -> Void)? = nil) {
+    public func addAction(image: UIImage? = nil, title: String, color: UIColor? = nil, style: UIAlertAction.Style = .default, isEnabled: Bool = true, handler: ((UIAlertAction) -> Void)? = nil) {
         //let isPad: Bool = UIDevice.current.userInterfaceIdiom == .pad
         //let action = UIAlertAction(title: title, style: isPad && style == .cancel ? .default : style, handler: handler)
         let action = UIAlertAction(title: title, style: style, handler: handler)
@@ -104,9 +104,9 @@ extension UIAlertController {
         setTitle(font: font, color: color)
     }
     
-    func setTitle(font: UIFont, color: UIColor) {
+    public func setTitle(font: UIFont, color: UIColor) {
         guard let title = self.title else { return }
-        let attributes: [NSAttributedStringKey: Any] = [.font: font, .foregroundColor: color]
+        let attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: color]
         let attributedTitle = NSMutableAttributedString(string: title, attributes: attributes)
         setValue(attributedTitle, forKey: "attributedTitle")
     }
@@ -124,9 +124,9 @@ extension UIAlertController {
         setMessage(font: font, color: color)
     }
     
-    func setMessage(font: UIFont, color: UIColor) {
+    public func setMessage(font: UIFont, color: UIColor) {
         guard let message = self.message else { return }
-        let attributes: [NSAttributedStringKey: Any] = [.font: font, .foregroundColor: color]
+        let attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: color]
         let attributedMessage = NSMutableAttributedString(string: message, attributes: attributes)
         setValue(attributedMessage, forKey: "attributedMessage")
     }
@@ -136,7 +136,7 @@ extension UIAlertController {
     /// - Parameters:
     ///   - vc: ViewController
     ///   - height: height of content viewController
-    func set(vc: UIViewController?, width: CGFloat? = nil, height: CGFloat? = nil) {
+    public func set(vc: UIViewController?, width: CGFloat? = nil, height: CGFloat? = nil) {
         guard let vc = vc else { return }
         setValue(vc, forKey: "contentViewController")
         if let height = height {

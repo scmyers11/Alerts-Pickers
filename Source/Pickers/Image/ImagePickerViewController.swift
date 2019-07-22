@@ -10,7 +10,7 @@ extension UIAlertController {
     ///   - images: for content to select
     ///   - selection: type and action for selection of image/images
     
-    public func addImagePicker(flow: UICollectionViewScrollDirection, paging: Bool, images: [UIImage], selection: ImagePickerViewController.SelectionType? = nil) {
+    public func addImagePicker(flow: UICollectionView.ScrollDirection, paging: Bool, images: [UIImage], selection: ImagePickerViewController.SelectionType? = nil) {
         let vc = ImagePickerViewController(flow: flow, paging: paging, images: images, selection: selection)
         
         if UIDevice.current.userInterfaceIdiom == .pad {
@@ -68,11 +68,11 @@ final public class ImagePickerViewController: UIViewController {
         $0.register(ItemWithImage.self, forCellWithReuseIdentifier: ItemWithImage.identifier)
         $0.showsVerticalScrollIndicator = false
         $0.showsHorizontalScrollIndicator = false
-        $0.decelerationRate = UIScrollViewDecelerationRateFast
-        $0.contentInsetAdjustmentBehavior = .never
+        $0.decelerationRate = UIScrollView.DecelerationRate.fast
+//        $0.contentInsetAdjustmentBehavior = .never
         $0.bounces = false
         $0.backgroundColor = .clear
-        $0.maskToBounds = false
+        $0.layer.masksToBounds = false
         $0.clipsToBounds = false
         return $0
     }(UICollectionView(frame: .zero, collectionViewLayout: layout))
@@ -90,7 +90,7 @@ final public class ImagePickerViewController: UIViewController {
     
     // MARK: Initialize
     
-    required public init(flow: UICollectionViewScrollDirection, paging: Bool, images: [UIImage], selection: SelectionType?) {
+    required public init(flow: UICollectionView.ScrollDirection, paging: Bool, images: [UIImage], selection: SelectionType?) {
         super.init(nibName: nil, bundle: nil)
         self.images = images
         self.selection = selection
@@ -173,7 +173,7 @@ extension ImagePickerViewController: UICollectionViewDataSource {
 extension ImagePickerViewController: UICollectionViewDelegateFlowLayout {
     
     public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        Log("view size = \(view.bounds), collectionView = \(collectionView.size), itemSize = \(itemSize)")
+        Log("view size = \(view.bounds), collectionView = \(collectionView.frame.size), itemSize = \(itemSize)")
         return itemSize
     }
 }

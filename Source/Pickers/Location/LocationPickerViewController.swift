@@ -11,12 +11,47 @@ extension UIAlertController {
     /// - Parameters:
     ///   - selection: type and action for selection of asset/assets
     
-    public func addLocationPicker(location: Location? = nil, completion: @escaping LocationPickerViewController.CompletionHandler) {
+    public func addLocationPicker(location: Location? = nil,
+                                  resourceProvider: LocationPickerViewControllerResourceProvider? = nil,
+                                  completion: @escaping LocationPickerViewController.CompletionHandler) {
         let vc = LocationPickerViewController()
+        if let resourceProvider = resourceProvider {
+            vc.resourceProvider = resourceProvider
+        }
         vc.location = location
         vc.completion = completion
         set(vc: vc)
     }
+}
+
+public protocol LocationPickerViewControllerResourceProvider {
+    
+    func localizedString(for type: LocationPickerViewControllerResourceStringType) -> String
+    
+    func imageForLocationButton() -> UIImage?
+    
+}
+
+public struct LocationPickerViewControllerSimpleResourceProvider: LocationPickerViewControllerResourceProvider {
+    
+    public func localizedString(for type: LocationPickerViewControllerResourceStringType) -> String {
+        switch type {
+        case .searchBarPlaceholder: return "Search or enter an address"
+        case .selectButtonTitle: return "Select"
+        case .searchHistoryLabel: return "Search History"
+        }
+    }
+    
+    public func imageForLocationButton() -> UIImage? {
+        return nil
+    }
+    
+}
+
+public enum LocationPickerViewControllerResourceStringType: Int {
+    case searchBarPlaceholder
+    case searchHistoryLabel
+    case selectButtonTitle
 }
 
 final public class LocationPickerViewController: UIViewController {
@@ -43,10 +78,20 @@ final public class LocationPickerViewController: UIViewController {
 	/// see `region` property of `MKLocalSearchRequest`
 	/// default: false
 	public var useCurrentLocationAsHint = false
+    
+    public var resourceProvider: LocationPickerViewControllerResourceProvider = LocationPickerViewControllerSimpleResourceProvider()
 	
-	public var searchBarPlaceholder = "Search or enter an address"
-	public var searchHistoryLabel = "Search History"
-    public var selectButtonTitle = "Select"
+    public var searchBarPlaceholder: String {
+        return resourceProvider.localizedString(for: .searchBarPlaceholder)
+    }
+    
+    public var searchHistoryLabel: String {
+        return resourceProvider.localizedString(for: .searchHistoryLabel)
+    }
+    
+    public var selectButtonTitle: String {
+        return resourceProvider.localizedString(for: .selectButtonTitle)
+    }
 	
 	public var mapType: MKMapType = .standard {
 		didSet {
@@ -81,16 +126,11 @@ final public class LocationPickerViewController: UIViewController {
         return $0
     }(MKMapView())
     
-    lazy var scaleView: MKScaleView = {
-        $0.scaleVisibility = .visible
-        return $0
-    }(MKScaleView(mapView: mapView))
-    
     lazy var locationButton: Button = {
         $0.backgroundColor = UIColor.white.withAlphaComponent(0.8)
-        $0.maskToBounds = true
-        $0.cornerRadius = 22
-        $0.setImage(#imageLiteral(resourceName: "geolocation"), for: UIControlState())
+        $0.layer.masksToBounds = true
+        $0.layer.cornerRadius = 22
+        $0.setImage(resourceProvider.imageForLocationButton(), for: UIControl.State())
         $0.addTarget(self, action: #selector(LocationPickerViewController.currentLocationPressed),
                          for: .touchUpInside)
         return $0
@@ -129,14 +169,13 @@ final public class LocationPickerViewController: UIViewController {
         let _ = searchController.view
 	}
 	
-	open override func loadView() {
+	public override func loadView() {
 		view = mapView
 	}
 	
-	open override func viewDidLoad() {
+	public override func viewDidLoad() {
 		super.viewDidLoad()
 		
-        mapView.addSubview(scaleView)
         mapView.addSubview(locationButton)
         
 		locationManager.delegate = self
@@ -167,16 +206,15 @@ final public class LocationPickerViewController: UIViewController {
 	
 	var presentedInitialLocation = false
 	
-    override open func viewWillLayoutSubviews() {
+    override public func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
-        searchView.frame = CGRect(x: 8, y: 8, width: view.width - 16, height: 57)
-        //searchController.searchBar.sizeToFit()
-        searchController.searchBar.width = searchView.width
-        searchController.searchBar.height = searchView.height
+        searchView.frame = CGRect(x: 0, y: 8, width: view.frame.width, height: 57)
+        searchController.searchBar.frame.size.width = searchView.frame.width
+        searchController.searchBar.frame.size.height = searchView.frame.height
         
     }
     
-    override open func viewDidLayoutSubviews() {
+    override public func viewDidLayoutSubviews() {
 		super.viewDidLayoutSubviews()
         preferredContentSize.height = UIScreen.main.bounds.height
         
@@ -237,7 +275,7 @@ final public class LocationPickerViewController: UIViewController {
 	}
 	
 	func showCoordinates(_ coordinate: CLLocationCoordinate2D, animated: Bool = true) {
-		let region = MKCoordinateRegionMakeWithDistance(coordinate, resultRegionDistance, resultRegionDistance)
+		let region = MKCoordinateRegion.init(center: coordinate, latitudinalMeters: resultRegionDistance, longitudinalMeters: resultRegionDistance)
 		mapView.setRegion(region, animated: animated)
 	}
 
@@ -251,7 +289,7 @@ final public class LocationPickerViewController: UIViewController {
         geocoder.reverseGeocodeLocation(location) { response, error in
             if let error = error as NSError?, error.code != 10 { // ignore cancelGeocode errors
                 // show error and remove annotation
-                let alert = UIAlertController(style: .alert, title: nil, message: error.localizedDescription)
+                let alert = UIAlertController(title: nil, message: error.localizedDescription, preferredStyle: .alert)
                 alert.addAction(title: "OK", style: .cancel) { action in
                     self.mapView.removeAnnotation(annotation)
                 }
@@ -314,7 +352,7 @@ extension LocationPickerViewController: UISearchResultsUpdating {
 			let term = userInfo[LocationPickerViewController.SearchTermKey] as? String
 			else { return }
 		
-		let request = MKLocalSearchRequest()
+		let request = MKLocalSearch.Request()
 		request.naturalLanguageQuery = term
 		
 		if let location = locationManager.location, useCurrentLocationAsHint {
@@ -329,7 +367,7 @@ extension LocationPickerViewController: UISearchResultsUpdating {
 		}
 	}
 	
-	func showItemsForSearchResult(_ searchResult: MKLocalSearchResponse?) {
+	func showItemsForSearchResult(_ searchResult: MKLocalSearch.Response?) {
 		results.locations = searchResult?.mapItems.map { Location(name: $0.name, placemark: $0.placemark) } ?? []
 		results.isShowingHistory = false
 		results.tableView.reloadData()
@@ -370,7 +408,7 @@ extension LocationPickerViewController: MKMapViewDelegate {
 		if annotation is MKUserLocation { return nil }
 		
 		let pin = MKPinAnnotationView(annotation: annotation, reuseIdentifier: "annotation")
-		pin.pinTintColor = UIColor(hex: 0xFF2DC6)
+		pin.pinTintColor = searchView.tintColor
         
 		// drop only on long press gesture
 		let fromLongPress = annotation is MKPointAnnotation
@@ -382,16 +420,14 @@ extension LocationPickerViewController: MKMapViewDelegate {
 	
 	func selectLocationButton() -> UIButton {
 		let button = UIButton(frame: CGRect(x: 0, y: 0, width: 70, height: 30))
-		button.setTitle(selectButtonTitle, for: UIControlState())
+		button.setTitle(selectButtonTitle, for: UIControl.State())
         if let titleLabel = button.titleLabel {
             let width = titleLabel.textRect(forBounds: CGRect(x: 0, y: 0, width: Int.max, height: 30), limitedToNumberOfLines: 1).width
             button.frame.size = CGSize(width: width + 10, height: 30.0)
         }
-        button.backgroundColor = UIColor(hex: 0x007AFF)
-		button.setTitleColor(.white, for: UIControlState())
-        button.borderWidth = 2
-        button.borderColor = UIColor(hex: 0x007AFF)
-        button.cornerRadius = 5
+        button.backgroundColor = searchView.tintColor
+		button.setTitleColor(.white, for: UIControl.State())
+        button.layer.cornerRadius = 5
         button.titleEdgeInsets.left = 5
         button.titleEdgeInsets.right = 5
 		return button
